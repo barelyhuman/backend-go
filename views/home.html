@@ -1,0 +1,20 @@
+{{define "HomePage"}} {{template "GlobalHead" .}}
+<body>
+  {{template "NavigationHeader" .}} {{if .HasError }}
+  <div class="error-banner">{{.Error}}</div>
+  {{end}}
+
+  <ul>
+    {{range $task := .Tasks }}
+    <li
+      class="
+      task 
+      {{if $task.Done}} done {{end}}
+    "
+    >
+      {{$task.Task}}
+    </li>
+    {{end}}
+  </ul>
+</body>
+{{end}}

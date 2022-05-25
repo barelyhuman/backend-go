@@ -1,0 +1,73 @@
+{{define "GlobalHead"}}
+<head>
+  {{template "GlobalScripts" .}}
+  <link rel="stylesheet" href="https://rsms.me/raster/raster2.css?v=20" />
+  <style>
+    :root {
+      --displayScale: 1;
+      --fontSize: 16px;
+    }
+
+    body {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 12px;
+    }
+
+    button {
+      background: transparent;
+      color: black;
+      border: 1px solid black;
+      height: 42px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1em;
+    }
+
+    button.primary {
+      color: white;
+      background: black;
+    }
+
+    button:hover {
+      opacity: 0.75;
+      cursor: pointer;
+    }
+
+    nav > ul {
+      list-style-type: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    nav > ul > li {
+      margin-right: 8px;
+      display: inline-block;
+    }
+
+    .w-100 {
+      width: 100%;
+    }
+
+    .flex {
+      display: flex;
+    }
+
+    .ml-auto {
+      margin-left: auto;
+    }
+
+    .task.done {
+      text-decoration: line-through;
+    }
+
+    .error-banner {
+      background: indianred;
+      color: white;
+      padding: 10px;
+      margin: 10px;
+    }
+  </style>
+</head>
+{{end}}
