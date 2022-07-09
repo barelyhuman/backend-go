@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"html/template"
 	"log"
 	"net/http"
 	"strconv"
@@ -9,6 +10,7 @@ import (
 	"github.com/barelyhuman/tasks/debug"
 	"github.com/barelyhuman/tasks/server"
 	"github.com/barelyhuman/tasks/storage"
+	"github.com/gorilla/csrf"
 
 	"github.com/joho/godotenv"
 	"github.com/julienschmidt/httprouter"
@@ -50,7 +52,8 @@ func HomeHandler(s *server.Server, w http.ResponseWriter, r *http.Request, _ htt
 func EditHandler(s *server.Server, w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	tasks, _ := s.Storage.GetTasksAsJSON()
 	response := struct {
-		Tasks string
+		Tasks     string
+		CSRFField template.HTML
 	}{}
 
 	// if err != nil {
@@ -62,6 +65,7 @@ func EditHandler(s *server.Server, w http.ResponseWriter, r *http.Request, _ htt
 
 	str, _ := json.Marshal(tasks)
 	response.Tasks = string(str)
+	response.CSRFField = csrf.TemplateField(r)
 	// response.HasError = false
 	// response.Error = ""
 

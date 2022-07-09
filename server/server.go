@@ -6,6 +6,7 @@ import (
 
 	"github.com/barelyhuman/tasks/storage"
 	"github.com/barelyhuman/tasks/views"
+	"github.com/gorilla/csrf"
 	"github.com/julienschmidt/httprouter"
 )
 
@@ -40,6 +41,7 @@ func (s *Server) CreateHandler(f func(*Server, http.ResponseWriter, *http.Reques
 }
 
 func (s *Server) StartServer() {
+	CSRF := csrf.Protect([]byte("phuWGkHK1heMDiIK"), csrf.Secure(false))
 	log.Println("Started listening on port :8080")
-	log.Fatal(http.ListenAndServe(":8080", s.Router))
+	log.Fatal(http.ListenAndServe(":8080", CSRF(s.Router)))
 }

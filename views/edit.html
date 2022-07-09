@@ -9,6 +9,7 @@
       </r-cell>
     </r-grid>
     <form action="/edit" method="post">
+      {{ .CSRFField }}
       <r-grid column="8">
         <template x-for="index in count">
           <r-cell span="row" x-data="{taskItem:tasks[index-1]}">
