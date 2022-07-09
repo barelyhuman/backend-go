@@ -1,11 +1,11 @@
-{{define "EditPage"}} {{template "GlobalHead" .}}
+{{ define "EditPage"}} {{ template "GlobalHead" .}}
 
 <body>
-  {{template "NavigationHeader" .}}
-  <div x-data="{tasks:{{.Tasks}},count:0}">
+  {{ template "NavigationHeader" .}}
+  <div x-data="{tasks:{{.Tasks}},count:0,toDelete:new Set()}">
     <r-grid column="8" x-init="count=tasks.length">
       <r-cell span="7...">
-        <button x-on:click="count+=1">Add</button>
+        <button x-on:click="count+=1; tasks.push({done:false})">Add</button>
       </r-cell>
     </r-grid>
     <form action="/edit" method="post">
@@ -14,29 +14,33 @@
           <r-cell span="row" x-data="{taskItem:tasks[index-1]}">
             <input
               type="text"
-              :value="taskItem?taskItem.task:''"
+              hidden
+              :value="taskItem ? taskItem.id : ''"
+              name="id"
+            />
+            <input
+              type="text"
+              :value="taskItem ? taskItem.task : ''"
               class="w-100"
               name="task"
             />
             <label for="">
               <input
                 type="checkbox"
-                x-bind:value="taskItem?taskItem.done:null"
+                :value="taskItem.id"
+                :checked="taskItem.done"
                 name="done"
               />
               Done
             </label>
-            <div class="flex">
-              <div class="ml-auto">
-                <button
-                  type="button"
-                  role="button"
-                  x-on:click="tasks.splice(index-1,1); count-=1"
-                >
-                  Remove
-                </button>
-              </div>
-            </div>
+            <label for="">
+              <input
+                type="checkbox"
+                :value="taskItem.id"
+                name="delete"
+              />
+              Delete
+            </label>
           </r-cell>
         </template>
       </r-grid>
@@ -45,4 +49,4 @@
   </div>
 </body>
 
-{{end}}
+{{ end }}

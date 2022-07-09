@@ -1,8 +1,10 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/barelyhuman/tasks/debug"
 	"github.com/barelyhuman/tasks/server"
@@ -16,14 +18,19 @@ type UserAppState struct {
 	Authenticated bool
 }
 
-type TaskReponse struct {
+type TaskResponse struct {
 	Tasks    []storage.TaskDetails
 	HasError bool
 	Error    string
 }
 
+type TasksState struct {
+	storage.TaskDetails
+	delete bool
+}
+
 func HomeHandler(s *server.Server, w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	response := &TaskReponse{}
+	response := &TaskResponse{}
 	tasks, err := s.Storage.GetTasksAsJSON()
 
 	if err != nil {
@@ -41,13 +48,24 @@ func HomeHandler(s *server.Server, w http.ResponseWriter, r *http.Request, _ htt
 }
 
 func EditHandler(s *server.Server, w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	tasks, _ := s.Storage.GetTasks()
-
-	err := s.Views.Templates.ExecuteTemplate(w, "EditPage", struct {
+	tasks, _ := s.Storage.GetTasksAsJSON()
+	response := struct {
 		Tasks string
-	}{
-		Tasks: tasks,
-	})
+	}{}
+
+	// if err != nil {
+	// 	// response.HasError = true
+	// 	// response.Error = err.Error()
+	// 	s.Views.Templates.ExecuteTemplate(w, "EditPage", response)
+	// 	return
+	// }
+
+	str, _ := json.Marshal(tasks)
+	response.Tasks = string(str)
+	// response.HasError = false
+	// response.Error = ""
+
+	err := s.Views.Templates.ExecuteTemplate(w, "EditPage", response)
 
 	debug.DebugErr(err)
 }
@@ -55,28 +73,58 @@ func EditHandler(s *server.Server, w http.ResponseWriter, r *http.Request, _ htt
 func UpdateTasksHandler(s *server.Server, w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	r.ParseForm()
 
-	tasks := []storage.TaskDetails{}
-
 	debug.DebugLog(r.Form)
 
-	for i, v := range r.Form["task"] {
-		done := false
-		if len(r.Form["done"]) > i && r.Form["done"][i] == "on" {
-			done = true
-		}
-		tasks = append(tasks, storage.TaskDetails{
-			Task: v,
-			Done: done,
-		})
+	tasks := []TasksState{}
+
+	for i, formTask := range r.Form["task"] {
+		formId := r.Form["id"][i]
+		idInt, _ := strconv.Atoi(formId)
+		id := int64(idInt)
+		basePayload := TasksState{}
+		basePayload.Task = formTask
+		basePayload.ID = id
+		tasks = append(tasks, basePayload)
 	}
 
-	s.Storage.SetTasks(tasks)
+	for _, idsToMark := range r.Form["done"] {
+		idInt, _ := strconv.Atoi(idsToMark)
+		id := int64(idInt)
+		for i, ts := range tasks {
+			if ts.ID == id {
+				tasks[i].Done = true
+				break
+			}
+		}
+	}
+
+	for _, idsToDel := range r.Form["delete"] {
+		idInt, _ := strconv.Atoi(idsToDel)
+		id := int64(idInt)
+		for i, ts := range tasks {
+			if ts.ID == id {
+				tasks[i].delete = true
+				break
+			}
+		}
+	}
+
+	for _, taskItem := range tasks {
+		if taskItem.delete {
+			s.Storage.RemoveTask(taskItem.ID)
+			continue
+		}
+		if taskItem.ID != 0 && s.Storage.TaskExists(taskItem.ID) {
+			s.Storage.UpdateTask(taskItem.TaskDetails)
+		} else {
+			s.Storage.InsertTask(taskItem.TaskDetails)
+		}
+	}
 
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func main() {
-
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
